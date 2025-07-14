@@ -25,20 +25,18 @@ export const Notification: React.FC<NotificationProps> = ({ message, type, onClo
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    // Entra con animazione
-    setVisible(true);
+    setVisible(true); // Attiva l'animazione di entrata
 
-    // Si chiude automaticamente dopo 5 secondi
     const timer = setTimeout(() => {
       handleClose();
-    }, 5000);
+    }, 5000); // La notifica scompare dopo 5 secondi
 
     return () => clearTimeout(timer);
   }, []);
 
   const handleClose = () => {
-    setVisible(false);
-    setTimeout(onClose, 300); // Attende la fine dell'animazione di uscita
+    setVisible(false); // Attiva l'animazione di uscita
+    setTimeout(onClose, 300); // Aspetta la fine dell'animazione per rimuovere il componente
   };
 
   return (
