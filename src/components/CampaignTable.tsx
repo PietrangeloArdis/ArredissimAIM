@@ -1,5 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react'; // Aggiungi useCallback
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react'; // Aggiunto useCallback
 import { Campaign, BUDGET_ALERT_THRESHOLD, formatMetric, getChannelMetrics, getStatusConfig, migrateStatus } from '../types/campaign';
 import { CampaignForm } from './CampaignForm';
 import { CampaignDuplicateModal } from './CampaignDuplicateModal';
@@ -52,12 +51,11 @@ export const CampaignTable: React.FC<CampaignTableProps> = ({
   
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const toggleGroup = (brandName: string) => {
-  setExpandedGroups(prev => ({
-    ...prev,
-    [brandName]: !prev[brandName],
-  }));
-};
-
+    setExpandedGroups(prev => ({
+      ...prev,
+      [brandName]: !prev[brandName],
+    }));
+  };
 
   const { getChannelByName } = useChannels();
 
@@ -70,10 +68,8 @@ export const CampaignTable: React.FC<CampaignTableProps> = ({
     return true;
   });
 
-  // Get visible KPIs for the current channel
   const visibleKpis = channel ? getChannelKpis(channel, getChannelByName) : ['budget', 'leads', 'cpl', 'roi'];
 
-  // Group campaigns by brand
   const brandGroups = useMemo((): BrandGroup[] => {
     const groups: { [brandName: string]: Campaign[] } = {};
     
@@ -89,7 +85,6 @@ export const CampaignTable: React.FC<CampaignTableProps> = ({
       const totalLeads = brandCampaigns.reduce((sum, c) => sum + c.leads, 0);
       const avgCPL = totalLeads > 0 ? totalBudget / totalLeads : 0;
       
-      // Calculate average ROI (only for campaigns with ROI data)
       const campaignsWithROI = brandCampaigns.filter(c => c.roi && c.roi !== 'N/A');
       const avgROI = campaignsWithROI.length > 0 
         ? campaignsWithROI.reduce((sum, c) => {
@@ -98,7 +93,6 @@ export const CampaignTable: React.FC<CampaignTableProps> = ({
           }, 0) / campaignsWithROI.length
         : 0;
 
-      // Calculate region breakdown
       const regionBreakdown: { [region: string]: { budget: number; leads: number; campaigns: number } } = {};
       brandCampaigns.forEach(campaign => {
         if (!regionBreakdown[campaign.region]) {
@@ -118,21 +112,24 @@ export const CampaignTable: React.FC<CampaignTableProps> = ({
         avgROI,
         regionBreakdown,
       };
-    }).sort((a, b) => b.totalBudget - a.totalBudget); // Sort by total budget descending
+    }).sort((a, b) => b.totalBudget - a.totalBudget);
   }, [filteredCampaigns]);
 
-  const handleEdit = (campaign: Campaign) => {
+  // --- MODIFICHE QUI ---
+  const handleEdit = useCallback((campaign: Campaign) => {
     setEditingCampaign(campaign);
     setShowForm(true);
-  };
+  }, []);
 
-  const handleDuplicate = (campaign: Campaign) => {
+  const handleDuplicate = useCallback((campaign: Campaign) => {
     setDuplicatingCampaign(campaign);
-  };
+  }, []);
 
-const handleDelete = (campaignId: string) => {
-  onDelete(campaignId);
-};
+  const handleDelete = useCallback((id: string) => {
+    onDelete(id);
+  }, [onDelete]);
+  // --- FINE MODIFICHE ---
+
   const handleFormSubmit = (campaignData: Omit<Campaign, 'id'>) => {
     if (editingCampaign) {
       onUpdate(editingCampaign.id!, campaignData);
@@ -188,7 +185,7 @@ const handleDelete = (campaignId: string) => {
     return channel?.color || '#6b7280';
   };
 
-  const renderChannelBadge = (channelName: string) => {
+  const renderChannelBadge = useCallback((channelName: string) => {
     const channelData = getChannelByName(channelName);
     if (!channelData) {
       return (
@@ -213,7 +210,7 @@ const handleDelete = (campaignId: string) => {
         {channelName}
       </span>
     );
-  };
+  }, [getChannelByName]);
 
   const formatBudget = (budget: number, extraBudget?: number, campaign?: Campaign) => {
     const alertPercentage = campaign ? getBudgetAlert(campaign) : null;
@@ -271,9 +268,8 @@ const handleDelete = (campaignId: string) => {
       </div>
     );
   };
-
-  // Render KPI value for individual campaigns
-  const renderKpiValue = (campaign: Campaign, kpiKey: string) => {
+  
+  const renderKpiValue = useCallback((campaign: Campaign, kpiKey: string) => {
     const kpiConfig = getKpiConfig(kpiKey);
     const grpAlert = getGRPAlert(campaign);
     
@@ -360,22 +356,20 @@ const handleDelete = (campaignId: string) => {
       case 'clicks':
       case 'ctr':
       case 'cpm':
-        // These are placeholder KPIs - would need to be added to Campaign interface
         return <div className="text-sm text-gray-500">—</div>;
       
       default:
         return <div className="text-sm text-gray-500">—</div>;
     }
-  };
+  }, []);
 
   const uniqueValues = {
     brands: [...new Set(campaigns.map(c => c.brand))],
     regions: [...new Set(campaigns.map(c => c.region))],
-    statuses: [...new Set(campaigns.map(c => migrateStatus(c.status)))], // Migrate legacy statuses
+    statuses: [...new Set(campaigns.map(c => migrateStatus(c.status)))],
     managers: [...new Set(campaigns.map(c => c.manager))],
   };
 
-  // Calculate summary statistics based on visible KPIs
   const getSummaryStats = () => {
     const stats: { [key: string]: number } = {};
     
@@ -388,6 +382,10 @@ const handleDelete = (campaignId: string) => {
 
   const summaryStats = getSummaryStats();
 
+  // ... il resto del file rimane uguale ...
+  // L'unica cosa importante è che le funzioni onEdit, onDelete, onDuplicate, etc.
+  // che vengono passate a CampaignRow siano avvolte in useCallback.
+  
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -402,7 +400,6 @@ const handleDelete = (campaignId: string) => {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          {/* View Mode Toggle */}
           <div className="flex bg-gray-100 rounded-lg p-1">
             <button
               onClick={() => setViewMode('grouped')}
@@ -437,17 +434,14 @@ const handleDelete = (campaignId: string) => {
         </div>
       </div>
 
-      {/* Channel Summary Panel (for channel-specific views) */}
       {channel && (
         <ChannelSummaryPanel campaigns={filteredCampaigns} channelName={channel} />
       )}
 
-      {/* Channel-specific KPI Cards */}
       {channel && (
         <ChannelKpiCards campaigns={filteredCampaigns} channelName={channel} />
       )}
 
-      {/* Summary Cards - Dynamic based on visible KPIs */}
       {viewMode === 'grouped' && brandGroups.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {(['budget', ...visibleKpis.filter(k => k !== 'budget')].slice(0, 4)).map((kpiKey) => {
@@ -468,7 +462,6 @@ const handleDelete = (campaignId: string) => {
         </div>
       )}
 
-      {/* Filters */}
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
         <div className="flex items-center gap-2 mb-3">
           <Filter className="w-4 h-4 text-gray-500" />
@@ -523,7 +516,6 @@ const handleDelete = (campaignId: string) => {
         </div>
       </div>
 
-      {/* Content */}
       {viewMode === 'grouped' ? (
         brandGroups.length === 0 ? (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
@@ -544,7 +536,6 @@ const handleDelete = (campaignId: string) => {
 
               return (
                 <div key={brandGroup.brandName} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                  {/* Brand Header */}
                   <div 
                     className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200 p-6"
                   >
@@ -575,7 +566,6 @@ const handleDelete = (campaignId: string) => {
                         </div>
                       </div>
 
-                      {/* Bulk Duplicate Button - Now with Channel Context */}
                       {channel && (
                         <button
                           onClick={() => setShowBulkDuplicateModal(brandGroup.brandName)}
@@ -588,7 +578,6 @@ const handleDelete = (campaignId: string) => {
                         </button>
                       )}
 
-                      {/* Brand Summary Cards - Dynamic based on visible KPIs */}
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         {(['budget', ...visibleKpis.filter(k => k !== 'budget')].slice(0, 4)).map((kpiKey) => {
                           const kpiConfig = getKpiConfig(kpiKey);
@@ -611,10 +600,8 @@ const handleDelete = (campaignId: string) => {
                     </div>
                   </div>
 
-                  {/* Expanded Content */}
                   {isExpanded && (
                     <div className="p-6">
-                      {/* Campaigns Table */}
                       <div className="overflow-x-auto">
                         <table className="w-full">
                           <CampaignTableHeader
@@ -649,7 +636,6 @@ const handleDelete = (campaignId: string) => {
           </div>
         )
       ) : (
-        /* Traditional Table View with Dynamic KPI Columns */
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -680,7 +666,6 @@ const handleDelete = (campaignId: string) => {
         </div>
       )}
 
-      {/* Modals */}
       {showForm && (
         <CampaignForm
           onSubmit={handleFormSubmit}
@@ -697,8 +682,7 @@ const handleDelete = (campaignId: string) => {
           onCancel={handleDuplicateCancel}
         />
       )}
-
-      {/* Bulk Duplicate Modal - Now with Channel Context */}
+      
       {showBulkDuplicateModal && channel && (
         <BrandCampaignBulkDuplicateModal
           brand={showBulkDuplicateModal}
