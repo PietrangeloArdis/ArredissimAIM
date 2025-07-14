@@ -2,62 +2,42 @@ import React, { useState } from 'react';
 import { Plus, Edit, Trash2, Save, X, User, Eye, EyeOff, AlertTriangle, Wifi, WifiOff } from 'lucide-react';
 import { Manager } from '../types/manager';
 import { useManagers } from '../hooks/useManagers';
+import { NotificationType } from './Notification'; // Importa il tipo di notifica
 
-export const ManagerManager: React.FC = () => {
+// Aggiungiamo la nuova prop per ricevere la funzione di notifica
+interface ManagerManagerProps {
+  showNotification: (message: string, type: NotificationType) => void;
+}
+
+export const ManagerManager: React.FC<ManagerManagerProps> = ({ showNotification }) => {
   const { managers, loading, error, addManager, updateManager, deleteManager } = useManagers();
   const [showForm, setShowForm] = useState(false);
   const [editingManager, setEditingManager] = useState<Manager | null>(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    initials: '',
-    active: true,
-  });
+  const [formData, setFormData] = useState({ name: '', initials: '', active: true });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Check for duplicate initials
-    const existingManager = managers.find(
-      m => m.initials.toLowerCase() === formData.initials.toLowerCase() && 
-           m.id !== editingManager?.id
-    );
-    
-    if (existingManager) {
-      alert(`Initials "${formData.initials}" are already used by ${existingManager.name}`);
-      return;
-    }
-    
     try {
       if (editingManager) {
         await updateManager(editingManager.id!, formData);
+        showNotification('Manager aggiornato con successo!', 'success');
       } else {
         await addManager(formData);
+        showNotification('Manager aggiunto con successo!', 'success');
       }
-      
       resetForm();
-    } catch (error) {
-      console.error('Error saving manager:', error);
-      // Error handling is done in the hook
+    } catch (err: any) {
+      showNotification(err.message || 'Si è verificato un errore', 'error');
     }
   };
 
-  const handleEdit = (manager: Manager) => {
-    setEditingManager(manager);
-    setFormData({
-      name: manager.name,
-      initials: manager.initials,
-      active: manager.active,
-    });
-    setShowForm(true);
-  };
-
-  const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this manager? This action cannot be undone.')) {
+  const handleDelete = async (id: string, name: string) => {
+    if (window.confirm(`Sei sicuro di voler eliminare "${name}"?`)) {
       try {
         await deleteManager(id);
-      } catch (error) {
-        console.error('Error deleting manager:', error);
-        // Error handling is done in the hook
+        showNotification(`Manager "${name}" eliminato.`, 'info');
+      } catch (err: any) {
+        showNotification(err.message || 'Errore durante l\'eliminazione', 'error');
       }
     }
   };
@@ -65,18 +45,20 @@ export const ManagerManager: React.FC = () => {
   const handleToggleActive = async (manager: Manager) => {
     try {
       await updateManager(manager.id!, { active: !manager.active });
+      showNotification(`Stato di "${manager.name}" aggiornato.`, 'info');
     } catch (error) {
-      console.error('Error toggling manager status:', error);
-      // Error handling is done in the hook
+      showNotification("Errore durante l'aggiornamento dello stato.", 'error');
     }
   };
 
+  const handleEdit = (manager: Manager) => {
+    setEditingManager(manager);
+    setFormData({ name: manager.name, initials: manager.initials, active: manager.active });
+    setShowForm(true);
+  };
+  
   const resetForm = () => {
-    setFormData({
-      name: '',
-      initials: '',
-      active: true,
-    });
+    setFormData({ name: '', initials: '', active: true });
     setEditingManager(null);
     setShowForm(false);
   };
@@ -106,7 +88,6 @@ export const ManagerManager: React.FC = () => {
           <p className="text-gray-600 mt-1">Manage campaign managers and their information</p>
         </div>
         <div className="flex items-center gap-4">
-          {/* Database Connection Status */}
           <div className="flex items-center gap-2">
             {error ? (
               <div className="flex items-center gap-2 text-red-600 bg-red-50 px-3 py-1 rounded-lg">
@@ -130,7 +111,6 @@ export const ManagerManager: React.FC = () => {
         </div>
       </div>
 
-      {/* Database Error Alert */}
       {error && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-4">
           <div className="flex items-center gap-3">
@@ -149,7 +129,6 @@ export const ManagerManager: React.FC = () => {
         </div>
       )}
 
-      {/* Manager List */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         {managers.length === 0 ? (
           <div className="text-center py-12">
@@ -222,7 +201,7 @@ export const ManagerManager: React.FC = () => {
                           <Edit className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => handleDelete(manager.id!)}
+                          onClick={() => handleDelete(manager.id!, manager.name)}
                           className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -237,7 +216,6 @@ export const ManagerManager: React.FC = () => {
         )}
       </div>
 
-      {/* Manager Form Modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md">
