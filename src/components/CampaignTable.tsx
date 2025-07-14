@@ -1,3 +1,4 @@
+import React, { useState, useMemo, useCallback } from 'react'; // Aggiungi useCallback
 import React, { useState, useMemo } from 'react';
 import { Campaign, BUDGET_ALERT_THRESHOLD, formatMetric, getChannelMetrics, getStatusConfig, migrateStatus } from '../types/campaign';
 import { CampaignForm } from './CampaignForm';
