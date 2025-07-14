@@ -1,4 +1,4 @@
-import React, { memo } from 'react'; // Aggiungi 'memo'
+import React, { memo } from 'react'; // Aggiunto "memo"
 import { Campaign } from '../../types/campaign';
 import { CampaignActions } from './CampaignActions';
 import { CampaignStatusBadge } from './CampaignStatusBadge';
@@ -17,7 +17,8 @@ interface CampaignRowProps {
   renderKpiValue: (campaign: Campaign, kpiKey: string) => JSX.Element;
 }
 
-export const CampaignRow: React.FC<CampaignRowProps> = memo(({...}) => { // Avvolgi il componente
+// "memo" avvolge il componente per ottimizzarlo
+export const CampaignRow: React.FC<CampaignRowProps> = memo(({
   campaign,
   visibleKpis,
   channel,
@@ -94,4 +95,4 @@ export const CampaignRow: React.FC<CampaignRowProps> = memo(({...}) => { // Avvo
       </td>
     </tr>
   );
-};
+});
