@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react'; // Aggiungi 'memo'
 import { Campaign } from '../../types/campaign';
 import { CampaignActions } from './CampaignActions';
 import { CampaignStatusBadge } from './CampaignStatusBadge';
@@ -17,7 +17,7 @@ interface CampaignRowProps {
   renderKpiValue: (campaign: Campaign, kpiKey: string) => JSX.Element;
 }
 
-export const CampaignRow: React.FC<CampaignRowProps> = ({
+export const CampaignRow: React.FC<CampaignRowProps> = memo(({...}) => { // Avvolgi il componente
   campaign,
   visibleKpis,
   channel,
