@@ -1,8 +1,8 @@
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApps, getApp } from 'firebase/app'; // Aggiungi getApps e getApp
 import { getFirestore } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
-// Firebase configuration
+// La tua configurazione rimane uguale
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -13,8 +13,10 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+// --- MODIFICA CHIAVE QUI ---
+// Controlla se l'app è già stata inizializzata prima di crearla
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+// -------------------------
 
 // Initialize Firebase services
 export const auth = getAuth(app);
