@@ -5,7 +5,7 @@ import { Dashboard } from './components/Dashboard';
 import { CampaignTable } from './components/CampaignTable';
 import { CampaignsList } from './components/CampaignsList';
 import { Planner } from './components/Planner';
-import { GanttPage } from './components/GanttPage'; // 1. IMPORTA LA PAGINA GANTT
+import { GanttPage } from './components/GanttPage';
 import { BrandManager } from './components/BrandManager';
 import { ManagerManager } from './components/ManagerManager';
 import { ChannelManager } from './components/ChannelManager';
@@ -77,7 +77,6 @@ function DashboardApp() {
         return <CampaignsList campaigns={campaigns} onAdd={addCampaign} onUpdate={updateCampaign} onDelete={deleteCampaign} />;
       case 'Planner':
         return <Planner campaigns={campaigns} onAdd={addCampaign} onUpdate={updateCampaign} />;
-      // 2. AGGIUNGI IL "case" PER MOSTRARE LA NUOVA PAGINA
       case 'Gantt':
         return <GanttPage campaigns={campaigns} />;
       case 'Brands':
