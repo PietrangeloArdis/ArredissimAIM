@@ -1,9 +1,10 @@
 import React, { useMemo } from 'react';
 import { Campaign } from '../../types/campaign';
 import { useChannels } from '../../hooks/useChannels';
-import { format, startOfMonth, endOfMonth, eachMonthOfInterval } from 'date-fns';
+// --- ECCO LA CORREZIONE: Aggiunte le funzioni mancanti ---
+import { format, startOfMonth, endOfMonth, eachMonthOfInterval, differenceInDays, max, min } from 'date-fns';
 import { it } from 'date-fns/locale';
-import { formatBudgetCompact, formatBudget } from '../../utils/budgetFormatter'; // Importa anche formatBudget normale
+import { formatBudgetCompact, formatBudget } from '../../utils/budgetFormatter';
 
 interface GanttChartProps {
   campaigns: Campaign[];
@@ -25,41 +26,45 @@ export const GanttChart: React.FC<GanttChartProps> = ({ campaigns }) => {
     return eachMonthOfInterval({ start: chartStartDate, end: chartEndDate });
   }, [campaigns]);
 
-  // Funzione per calcolare il budget ripartito mensile (invariata)
   const getProratedMonthlyBudget = (channelName: string, month: Date): number => {
     const monthStart = startOfMonth(month);
     const monthEnd = endOfMonth(month);
+
     let totalChannelBudgetInMonth = 0;
+
     const channelCampaigns = campaigns.filter(c => c.channel === channelName);
 
     for (const campaign of channelCampaigns) {
       const campaignStart = new Date(campaign.startDate);
       const campaignEnd = new Date(campaign.endDate);
-      if (campaignStart > monthEnd || campaignEnd < monthStart) continue;
+
+      if (campaignStart > monthEnd || campaignEnd < monthStart) {
+        continue;
+      }
 
       const totalCampaignDays = differenceInDays(campaignEnd, campaignStart) + 1;
       if (totalCampaignDays <= 0) continue;
 
       const dailyBudget = campaign.budget / totalCampaignDays;
+
       const effectiveStartDate = max([campaignStart, monthStart]);
       const effectiveEndDate = min([campaignEnd, monthEnd]);
+
       const activeDaysInMonth = differenceInDays(effectiveEndDate, effectiveStartDate) + 1;
       
       if (activeDaysInMonth > 0) {
         totalChannelBudgetInMonth += dailyBudget * activeDaysInMonth;
       }
     }
+    
     return totalChannelBudgetInMonth;
   };
   
-  // ========= NUOVA FUNZIONE PER CALCOLARE IL BUDGET TOTALE DEL CANALE =========
   const getTotalChannelBudget = (channelName: string) => {
     return campaigns
       .filter(c => c.channel === channelName)
       .reduce((sum, c) => sum + c.budget, 0);
   };
-  // =======================================================================
-
 
   if (campaigns.length === 0) {
     return <div className="text-center py-10 text-gray-500">Nessuna campagna da visualizzare.</div>;
@@ -86,25 +91,21 @@ export const GanttChart: React.FC<GanttChartProps> = ({ campaigns }) => {
         <div className="relative">
           {activeChannels.map((channel) => {
             const channelInfo = getChannelByName(channel.name);
-            // Calcola il budget totale per la riga corrente
             const totalBudget = getTotalChannelBudget(channel.name); 
 
             return (
               <div key={channel.name} className="flex h-12 border-b border-gray-100">
-                {/* ========= COLONNA CANALE MODIFICATA ========= */}
                 <div className="w-48 flex-shrink-0 border-r border-gray-200 p-2 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full" style={{ backgroundColor: channelInfo?.color || '#ccc' }}></div>
                     <span className="font-bold text-sm text-gray-800">{channel.name}</span>
                   </div>
-                  {/* Mostra il budget totale se è maggiore di zero */}
                   {totalBudget > 0 && (
                     <span className="text-xs font-semibold text-gray-500">
                       {formatBudget(totalBudget)}
                     </span>
                   )}
                 </div>
-                {/* ============================================== */}
                 
                 <div className="flex-1 flex">
                   {months.map((month, monthIndex) => {
