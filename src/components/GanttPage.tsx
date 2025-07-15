@@ -13,12 +13,9 @@ export const GanttPage: React.FC<GanttPageProps> = ({ campaigns }) => {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-3xl font-bold text-gray-900">Gantt Generale Campagne</h2>
-          <p className="text-gray-600 mt-1">
-            Visione d'insieme temporale di tutte le campagne attive e pianificate.
-          </p>
+          <p className="text-gray-600 mt-1">Visione d'insieme temporale di tutte le campagne attive e pianificate.</p>
         </div>
       </div>
-      
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
         <div className="flex items-center gap-2 mb-4 text-lg font-semibold text-gray-800">
             <LayoutGrid className="w-5 h-5 text-blue-600"/>
