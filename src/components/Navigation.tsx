@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { 
-  Search, Music, Image, Tv, Radio, Calendar, Building2, LogOut, 
-  ChevronDown, BarChart3, Menu, X, Users, Zap, Facebook, Smartphone, 
-  Monitor, Mail, Globe, Target, List, Settings, Antenna, MapPin 
+import {
+  Search, Music, Image, Tv, Radio, Calendar, Building2, LogOut,
+  ChevronDown, BarChart3, Menu, X, Users, Zap, Facebook, Smartphone,
+  Monitor, Mail, Globe, Target, List, Settings, Antenna, MapPin, LayoutGrid // 1. Aggiungi LayoutGrid
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useChannels } from '../hooks/useChannels';
@@ -45,7 +45,8 @@ export const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }
   const { t, i18n } = useTranslation();
 
   const activeChannels = getActiveChannels();
-  const mainTabs = ['Dashboard', 'Campaigns', 'Planner'];
+  // 2. Aggiungi 'Gantt' all'array dei tab principali
+  const mainTabs = ['Dashboard', 'Campaigns', 'Planner', 'Gantt'];
   const configTabs = ['Brands', 'Managers', 'Channels', 'Broadcasters', 'Regions'];
   const isChannelActive = activeChannels.some(channel => channel.name === activeTab);
   const isConfigActive = configTabs.includes(activeTab);
@@ -95,6 +96,7 @@ export const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }
       case 'Dashboard': return BarChart3;
       case 'Campaigns': return List;
       case 'Planner': return Calendar;
+      case 'Gantt': return LayoutGrid; // 3. Aggiungi il caso per l'icona del Gantt
       case 'Brands': return Building2;
       case 'Managers': return Users;
       case 'Channels': return Zap;
@@ -295,7 +297,6 @@ export const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }
 
           {/* User Info & Actions */}
           <div className="flex items-center space-x-4">
-            {/* Language Toggle */}
             <button
               onClick={toggleLanguage}
               className="px-3 py-1 text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -303,7 +304,6 @@ export const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }
               {i18n.language === 'it' ? '🇮🇹 IT' : '🇬🇧 EN'}
             </button>
             
-            {/* User Info - Hidden on small screens */}
             <div className="hidden md:flex items-center space-x-3">
               <div className="text-right">
                 <div className="text-sm font-medium text-gray-900">
@@ -320,7 +320,6 @@ export const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }
               </div>
             </div>
 
-            {/* Logout Button */}
             <button
               onClick={handleLogout}
               className="flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
@@ -330,7 +329,6 @@ export const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }
               <span className="hidden sm:inline">Esci</span>
             </button>
 
-            {/* Mobile Menu Button */}
             <button
               onClick={() => setShowMobileMenu(!showMobileMenu)}
               className="lg:hidden p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100"
@@ -348,7 +346,6 @@ export const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }
         {showMobileMenu && (
           <div className="lg:hidden border-t border-gray-200 py-4">
             <div className="space-y-2">
-              {/* Main Tabs */}
               <div className="space-y-1">
                 {mainTabs.map((tab) => {
                   const Icon = getTabIcon(tab);
@@ -371,7 +368,6 @@ export const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }
                 })}
               </div>
 
-              {/* Channels Section */}
               {activeChannels.length > 0 && (
                 <div className="pt-4 border-t border-gray-200">
                   <div className="px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -411,7 +407,6 @@ export const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }
                 </div>
               )}
 
-              {/* Configuration Section */}
               <div className="pt-4 border-t border-gray-200">
                 <div className="px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Configurazione Sistema
@@ -442,7 +437,6 @@ export const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }
                 </div>
               </div>
 
-              {/* Mobile User Info */}
               <div className="pt-4 border-t border-gray-200">
                 <div className="px-4 py-2 text-sm text-gray-600">
                   Accesso come: <span className="font-medium">{user?.email}</span>
