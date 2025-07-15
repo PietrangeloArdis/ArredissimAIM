@@ -287,7 +287,7 @@ export const ChannelManager: React.FC = () => {
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Channel</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Visual</th>
+                  {/*<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Visual</th>*/}
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">KPI Configuration</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grouping Logic</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
@@ -327,6 +327,7 @@ export const ChannelManager: React.FC = () => {
                           {channelType === 'digital' ? '📱' : '📺'} {channelType}
                         </span>
                       </td>
+                      {/*
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
                           <div 
@@ -338,6 +339,7 @@ export const ChannelManager: React.FC = () => {
                           </span>
                         </div>
                       </td>
+                      */}
                       <td className="px-6 py-4">
                         <div className="flex flex-wrap gap-1 max-w-xs">
                           {visibleKpis.slice(0, 3).map((kpiKey) => {
