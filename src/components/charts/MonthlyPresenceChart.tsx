@@ -2,7 +2,10 @@ import React, { useMemo, useState } from 'react';
 import { Campaign } from '../../types/campaign';
 import { useChannels } from '../../hooks/useChannels';
 import { formatBudget } from '../../utils/budgetFormatter';
-import { BarChart3, Grid3X3, Calendar, Eye } from 'lucide-react';
+import { BarChart3, Grid3X3, Calendar, Eye, EyeOff } from 'lucide-react';
+// 1. Aggiungiamo le funzioni di 'date-fns' necessarie per il calcolo
+import { format, differenceInDays, startOfMonth, endOfMonth, eachMonthOfInterval, max, min } from 'date-fns';
+import { it } from 'date-fns/locale';
 
 interface MonthlyPresenceChartProps {
   campaigns?: Campaign[];
@@ -16,12 +19,12 @@ interface MonthlyPresenceData {
   channels: {
     [channelName: string]: {
       isActive: boolean;
-      budget: number;
+      budget: number; // Questo sarà ora il budget ripartito
       campaignCount: number;
       campaigns: Campaign[];
     };
   };
-  totalBudget: number;
+  totalBudget: number; // Anche questo sarà ripartito
   totalCampaigns: number;
 }
 
@@ -34,24 +37,13 @@ export const MonthlyPresenceChart: React.FC<MonthlyPresenceChartProps> = ({
 }) => {
   const [viewMode, setViewMode] = useState<ViewMode>(propViewMode);
 
-  // Safe guard validation
-  if (!Array.isArray(campaigns) || campaigns.length === 0) {
+  if (!Array.isArray(campaigns) || campaigns.length === 0 || !dateRange) {
+    // Gestione del caso in cui non ci sono dati o range di date
     return (
       <div className="flex items-center justify-center h-64 text-gray-500">
         <div className="text-center">
-          <div className="text-lg font-medium">No campaign data available</div>
-          <p className="text-sm">Campaign presence will appear when campaigns are added</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!dateRange || !dateRange.startDate || !dateRange.endDate) {
-    return (
-      <div className="flex items-center justify-center h-64 text-gray-500">
-        <div className="text-center">
-          <div className="text-lg font-medium">Date range required</div>
-          <p className="text-sm">Please select a date range to view campaign presence</p>
+          <div className="text-lg font-medium">Dati insufficienti per visualizzare la timeline</div>
+          <p className="text-sm">Seleziona un intervallo di date e assicurati che ci siano campagne.</p>
         </div>
       </div>
     );
@@ -60,64 +52,72 @@ export const MonthlyPresenceChart: React.FC<MonthlyPresenceChartProps> = ({
   const { getChannelByName, getActiveChannels } = useChannels();
   const activeChannels = getActiveChannels();
 
-  // Generate monthly data
+  // 2. Logica di calcolo del budget ripartito
+  const getProratedMonthlyBudget = (campaignsInMonth: Campaign[], month: Date): number => {
+    const monthStart = startOfMonth(month);
+    const monthEnd = endOfMonth(month);
+    let totalBudgetInMonth = 0;
+
+    for (const campaign of campaignsInMonth) {
+      const campaignStart = new Date(campaign.startDate);
+      const campaignEnd = new Date(campaign.endDate);
+      
+      const totalCampaignDays = differenceInDays(campaignEnd, campaignStart) + 1;
+      if (totalCampaignDays <= 0) continue;
+
+      const dailyBudget = campaign.budget / totalCampaignDays;
+      const effectiveStartDate = max([campaignStart, monthStart]);
+      const effectiveEndDate = min([campaignEnd, monthEnd]);
+      const activeDaysInMonth = differenceInDays(effectiveEndDate, effectiveStartDate) + 1;
+
+      if (activeDaysInMonth > 0) {
+        totalBudgetInMonth += dailyBudget * activeDaysInMonth;
+      }
+    }
+    return totalBudgetInMonth;
+  };
+
   const monthlyData = useMemo((): MonthlyPresenceData[] => {
     const startDate = new Date(dateRange.startDate);
     const endDate = new Date(dateRange.endDate);
     const months: MonthlyPresenceData[] = [];
 
-    // Generate all months in the range
-    const currentDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
-    const lastDate = new Date(endDate.getFullYear(), endDate.getMonth(), 1);
+    const monthsInInterval = eachMonthOfInterval({ start: startDate, end: endDate });
 
-    while (currentDate <= lastDate) {
-      const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
-      const monthLabel = currentDate.toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'short' 
-      });
-
-      // Get month boundaries
-      const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-      const monthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
-
-      // Find campaigns active in this month
+    for (const currentDate of monthsInInterval) {
+      const monthStart = startOfMonth(currentDate);
+      const monthEnd = endOfMonth(currentDate);
+      
       const monthCampaigns = campaigns.filter(campaign => {
         const campaignStart = new Date(campaign.startDate);
         const campaignEnd = new Date(campaign.endDate);
-        
-        // Check if campaign overlaps with this month
         return campaignStart <= monthEnd && campaignEnd >= monthStart;
       });
 
-      // Group by channel
       const channelData: MonthlyPresenceData['channels'] = {};
-      let totalBudget = 0;
-
+      
       activeChannels.forEach(channel => {
-        const channelCampaigns = monthCampaigns.filter(c => c.channel === channel.name);
-        const channelBudget = channelCampaigns.reduce((sum, c) => sum + c.budget, 0);
+        const channelCampaignsInMonth = monthCampaigns.filter(c => c.channel === channel.name);
+        // 3. Usa la nuova logica per calcolare il budget
+        const proratedBudget = getProratedMonthlyBudget(channelCampaignsInMonth, currentDate);
         
         channelData[channel.name] = {
-          isActive: channelCampaigns.length > 0,
-          budget: channelBudget,
-          campaignCount: channelCampaigns.length,
-          campaigns: channelCampaigns
+          isActive: channelCampaignsInMonth.length > 0,
+          budget: proratedBudget,
+          campaignCount: channelCampaignsInMonth.length,
+          campaigns: channelCampaignsInMonth
         };
-
-        totalBudget += channelBudget;
       });
+
+      const totalProratedBudget = getProratedMonthlyBudget(monthCampaigns, currentDate);
 
       months.push({
-        month: monthLabel,
-        monthKey,
+        month: format(currentDate, 'MMM yyyy', { locale: it }),
+        monthKey: format(currentDate, 'yyyy-MM'),
         channels: channelData,
-        totalBudget,
+        totalBudget: totalProratedBudget,
         totalCampaigns: monthCampaigns.length
       });
-
-      // Move to next month
-      currentDate.setMonth(currentDate.getMonth() + 1);
     }
 
     return months;
