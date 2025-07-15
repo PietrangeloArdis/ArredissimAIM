@@ -5,6 +5,7 @@ import { Dashboard } from './components/Dashboard';
 import { CampaignTable } from './components/CampaignTable';
 import { CampaignsList } from './components/CampaignsList';
 import { Planner } from './components/Planner';
+import { GanttPage } from './components/GanttPage'; // 1. IMPORTA LA PAGINA GANTT
 import { BrandManager } from './components/BrandManager';
 import { ManagerManager } from './components/ManagerManager';
 import { ChannelManager } from './components/ChannelManager';
@@ -16,7 +17,6 @@ import { useFirestore } from './hooks/useFirestore';
 import { useChannels } from './hooks/useChannels';
 import { useTranslation } from 'react-i18next';
 import { updateCampaignStatuses } from './utils/updateCampaignStatuses';
-// --- MODIFICA 1: Importa il componente Notification e i suoi tipi ---
 import { Notification, NotificationProps, NotificationType } from './components/Notification';
 
 function App() {
@@ -37,18 +37,14 @@ function App() {
 
 function DashboardApp() {
   const [activeTab, setActiveTab] = useState('Dashboard');
-  // --- MODIFICA 2: Aggiungi uno stato per gestire le notifiche ---
   const [notification, setNotification] = useState<Omit<NotificationProps, 'onClose'> | null>(null);
-
   const { campaigns, loading, addCampaign, updateCampaign, deleteCampaign } = useFirestore();
   const { getActiveChannels } = useChannels();
   const { t } = useTranslation();
 
-  // --- MODIFICA 3: Crea una funzione per mostrare una notifica ---
   const showNotification = useCallback((message: string, type: NotificationType = 'info') => {
     setNotification({ message, type });
   }, []);
-
 
   useEffect(() => {
     const today = new Date().toISOString().split('T')[0];
@@ -74,7 +70,6 @@ function DashboardApp() {
   }
 
   const renderContent = () => {
-    // --- MODIFICA 4: Passa la funzione 'showNotification' ai componenti di gestione ---
     switch (activeTab) {
       case 'Dashboard':
         return <Dashboard campaigns={campaigns} />;
@@ -82,6 +77,9 @@ function DashboardApp() {
         return <CampaignsList campaigns={campaigns} onAdd={addCampaign} onUpdate={updateCampaign} onDelete={deleteCampaign} />;
       case 'Planner':
         return <Planner campaigns={campaigns} onAdd={addCampaign} onUpdate={updateCampaign} />;
+      // 2. AGGIUNGI IL "case" PER MOSTRARE LA NUOVA PAGINA
+      case 'Gantt':
+        return <GanttPage campaigns={campaigns} />;
       case 'Brands':
         return <BrandManager showNotification={showNotification} />;
       case 'Managers':
@@ -107,7 +105,6 @@ function DashboardApp() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {renderContent()}
       </main>
-      {/* --- MODIFICA 5: Mostra il componente Notification se c'è un messaggio --- */}
       {notification && (
         <Notification
           message={notification.message}
